@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>NEXINT</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #111827;
+      --bg-card: #151c2e;
+      --bg-input: #0d1220;
+      --border: #1e2a42;
+      --border-focus: #3b82f6;
+      --text-primary: #e2e8f0;
+      --text-secondary: #8892a8;
+      --text-muted: #4a5568;
+      --accent: #3b82f6;
+      --accent-dim: #1e3a6e;
+      --accent-glow: rgba(59, 130, 246, 0.15);
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --cyan: #06b6d4;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-secondary);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-align: center;
+      margin-bottom: 2px;
+    }
+
+    .logo .nex { color: #ffffff; }
+    .logo .int { color: var(--accent); }
+
+    .logo-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--text-muted);
+      text-align: center;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      flex-shrink: 0;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .search-section { padding: 16px; }
+
+    .search-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .search-tabs::-webkit-scrollbar { display: none; }
+
+    .search-tab {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .search-tab.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .search-input-wrap {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .search-prompt {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--accent);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 12px 12px 28px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .search-input::placeholder { color: var(--text-muted); }
+
+    .search-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .search-btn:active { transform: scale(0.98); background: #2563eb; }
+    .search-btn:disabled { background: var(--text-muted); cursor: not-allowed; }
+
+    .results-section { padding: 0 16px 100px; }
+
+    .results-header {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .results-header span { color: var(--accent); }
+
+    .entity-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .entity-card.expanded { border-color: var(--accent); }
+
+    .entity-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      cursor: pointer;
+    }
+
+    .entity-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .entity-icon.phone { background: rgba(34, 197, 94, 0.15); }
+    .entity-icon.email { background: rgba(59, 130, 246, 0.15); }
+    .entity-icon.person { background: rgba(168, 85, 247, 0.15); }
+    .entity-icon.social { background: rgba(6, 182, 212, 0.15); }
+    .entity-icon.domain { background: rgba(245, 158, 11, 0.15); }
+    .entity-icon.leak { background: rgba(239, 68, 68, 0.15); }
+    .entity-icon.location { background: rgba(34, 197, 94, 0.15); }
+
+    .entity-info { flex: 1; min-width: 0; }
+
+    .entity-type {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .entity-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .entity-confidence {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .conf-high { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+    .conf-med { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .conf-low { background: rgba(239, 68, 68, 0.15); color: var(--error); }
+
+    .entity-details {
+      display: none;
+      padding: 0 12px 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .entity-card.expanded .entity-details { display: block; }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(30, 42, 66, 0.5);
+      font-size: 12px;
+    }
+
+    .detail-row:last-child { border-bottom: none; }
+
+    .detail-key {
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+    }
+
+    .detail-val {
+      color: var(--text-primary);
+      text-align: right;
+      max-width: 60%;
+      word-break: break-all;
+    }
+
+    .source-tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: var(--accent-glow);
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      margin: 2px;
+    }
+
+    .loading-overlay {
+      display: none;
+      padding: 40px 16px;
+      text-align: center;
+    }
+
+    .loading-overlay.active { display: block; }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .loading-providers {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-state .terminal-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+
+    .empty-state p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .error-msg {
+      display: none;
+      padding: 12px 16px;
+      margin: 0 16px 12px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--error);
+    }
+
+    .error-msg.active { display: block; }
+
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 16px 0 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .settings-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 16px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 99;
+      transition: all 0.2s;
+    }
+
+    .settings-btn:active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--bg-secondary);
+      border-top-left-radius: 16px;
+      border-top-right-radius: 16px;
+      width: 100%;
+      max-height: 70vh;
+      overflow-y: auto;
+      padding: 20px 16px 40px;
+    }
+
+    .modal-handle {
+      width: 32px;
+      height: 4px;
+      background: var(--text-muted);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+
+    .modal h3 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .setting-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .setting-input {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      padding: 6px 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      width: 180px;
+      text-align: right;
+      outline: none;
+    }
+
+    .setting-input:focus { border-color: var(--accent); }
+
+    .modal-save {
+      width: 100%;
+      padding: 12px;
+      margin-top: 16px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo"><span class="nex">NEX</span><span class="int">INT</span></div>
+    <div class="logo-sub">intelligence platform</div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <span>system online</span>
+    <span>|</span>
+    <span id="providerCount">0 providers</span>
+    <span>|</span>
+    <span id="currentTime">--:--:--</span>
+  </div>
+
+  <div class="search-section">
+    <div class="search-tabs" id="searchTabs">
+      <button class="search-tab active" data-type="auto">AUTO</button>
+      <button class="search-tab" data-type="phone">PHONE</button>
+      <button class="search-tab" data-type="email">EMAIL</button>
+      <button class="search-tab" data-type="username">USER</button>
+      <button class="search-tab" data-type="domain">DOMAIN</button>
+      <button class="search-tab" data-type="ip">IP</button>
+    </div>
+
+    <div class="search-input-wrap">
+      <span class="search-prompt">&gt;</span>
+      <input type="text" class="search-input" id="searchInput"
+             placeholder="enter target identifier..."
+             autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+
+    <button class="search-btn" id="searchBtn" onclick="startSearch()">
+      INVESTIGATE
+    </button>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="loading-overlay" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">investigating target...</div>
+    <div class="loading-providers" id="loadingProviders">querying providers...</div>
+  </div>
+
+  <div class="results-section" id="results"></div>
+
+  <div class="empty-state" id="emptyState">
+    <div class="terminal-icon">_</div>
+    <p>enter phone, email, username,<br>domain or IP to investigate</p>
+  </div>
+
+  <button class="settings-btn" onclick="openSettings()">&#9881;</button>
+
+  <div class="modal-overlay" id="settingsModal" onclick="closeSettings(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      <h3>&#9881; settings</h3>
+
+      <div class="setting-row">
+        <span class="setting-label">Backend URL</span>
+        <input type="text" class="setting-input" id="settingApiUrl"
+               placeholder="http://localhost:8000">
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">API Key</span>
+        <input type="password" class="setting-input" id="settingApiKey"
+               placeholder="optional">
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">ngrok URL</span>
+        <input type="text" class="setting-input" id="settingNgrok"
+               placeholder="https://xxxx.ngrok-free.app">
+      </div>
+
+      <button class="modal-save" onclick="saveSettings()">SAVE</button>
+    </div>
+  </div>
+
+  <script>
+    // ---- CONFIG ----
+    const DEFAULT_API = 'http://localhost:8000';
+    let API_BASE = localStorage.getItem('nexint_api_url') || DEFAULT_API;
+    let API_KEY  = localStorage.getItem('nexint_api_key') || '';
+    let currentType = 'auto';
+
+    // ---- TELEGRAM WEBAPP ----
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      try {
+        tg.setHeaderColor('#0a0e1a');
+        tg.setBackgroundColor('#0a0e1a');
+      } catch(e) {}
+    }
+
+    // ---- CLOCK ----
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('currentTime').textContent =
+        [now.getHours(), now.getMinutes(), now.getSeconds()]
+          .map(n => String(n).padStart(2, '0')).join(':');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ---- TABS ----
+    document.getElementById('searchTabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.search-tab');
+      if (!tab) return;
+      document.querySelectorAll('.search-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentType = tab.dataset.type;
+      const ph = { auto:'enter target identifier...', phone:'+7 999 123 45 67',
+                    email:'target@example.com', username:'username or @handle',
+                    domain:'example.com', ip:'1.2.3.4' };
+      document.getElementById('searchInput').placeholder = ph[currentType] || '';
+    });
+
+    // ---- SEARCH ----
+    async function startSearch() {
+      const input = document.getElementById('searchInput').value.trim();
+      if (!input) return;
+      const btn = document.getElementById('searchBtn');
+      btn.disabled = true;
+      hideError();
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('emptyState').style.display = 'none';
+      showLoading(true);
+
+      try {
+        const type = currentType === 'auto' ? detectType(input) : currentType;
+        const headers = { 'Content-Type': 'application/json' };
+        if (API_KEY) headers['Authorization'] = 'Bearer ' + API_KEY;
+
+        const resp = await fetch(API_BASE + '/api/v1/search', {
+          method: 'POST', headers,
+          body: JSON.stringify({ query: input, entity_type: type })
+        });
+
+        if (!resp.ok) throw new Error('API error: ' + resp.status);
+        const data = await resp.json();
+        showLoading(false);
+        renderResults(data);
+      } catch (err) {
+        showLoading(false);
+        if (err.message.includes('fetch') || err.message.includes('Failed') || err.message.includes('Network')) {
+          showError('backend offline — check settings or start ngrok');
+          renderResults(getDemoData(input));
+        } else {
+          showError(err.message);
+        }
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('searchInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') startSearch();
+    });
+
+    function detectType(q) {
+      if (/^[+]?\d[\d\s\-()]{6,}$/.test(q.replace(/\s/g, ''))) return 'phone';
+      if (q.includes('@') && q.includes('.')) return 'email';
+      if (/^\d{1,3}(\.\d{1,3}){3}$/.test(q)) return 'ip';
+      if (/^[a-zA-Z0-9]([a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}$/.test(q)) return 'domain';
+      return 'username';
+    }
+
+    // ---- RENDER ----
+    function renderResults(data) {
+      const container = document.getElementById('results');
+      container.innerHTML = '';
+      if (!data || (!data.entities?.length && !data.results?.length)) {
+        container.innerHTML = '<div class="empty-state"><p>no results found</p></div>';
+        return;
+      }
+      const entities = data.entities || data.results || [];
+      const prov = data.providers_used || data.provider_count || '?';
+      container.innerHTML = '<div class="results-header">found <span>' + entities.length +
+        '</span> entities from <span>' + prov + '</span> providers</div>';
+
+      const groups = {};
+      entities.forEach(e => {
+        const t = e.entity_type || e.type || 'unknown';
+        if (!groups[t]) groups[t] = [];
+        groups[t].push(e);
+      });
+
+      const order = ['PERSON','PHONE','EMAIL','SOCIAL','TELEGRAM','USERNAME','DOMAIN','IP',
+                      'LOCATION','ORGANIZATION','DATA_SOURCE','URL','LEAK','PUBLICATION'];
+
+      order.forEach(type => {
+        if (!groups[type]) return;
+        container.innerHTML += '<div class="section-divider">' + type.toLowerCase() + '</div>';
+        groups[type].forEach(en => { container.innerHTML += renderCard(en); });
+      });
+      Object.keys(groups).forEach(type => {
+        if (order.includes(type)) return;
+        container.innerHTML += '<div class="section-divider">' + type.toLowerCase() + '</div>';
+        groups[type].forEach(en => { container.innerHTML += renderCard(en); });
+      });
+
+      document.getElementById('providerCount').textContent = prov + ' providers';
+      container.querySelectorAll('.entity-header').forEach(h => {
+        h.addEventListener('click', () => h.closest('.entity-card').classList.toggle('expanded'));
+      });
+    }
+
+    function renderCard(entity) {
+      const type = (entity.entity_type || entity.type || 'unknown').toLowerCase();
+      const value = entity.value || entity.label || entity.display_name || '—';
+      const label = entity.label || entity.display_name || value;
+      const conf = entity.confidence || 0;
+      const icons = { phone:'\u{1F4DE}', email:'✉', person:'\u{1F464}',
+                       social:'\u{1F310}', telegram:'✈', username:'@',
+                       domain:'\u{1F310}', ip:'\u{1F5A5}', location:'\u{1F4CD}',
+                       organization:'\u{1F3E2}', data_source:'\u{1F5C3}',
+                       leak:'⚠', url:'\u{1F517}', publication:'\u{1F4C4}' };
+      const ic = ['phone','email','person','social','domain','leak','location'].includes(type) ? type : 'social';
+      const cc = conf >= 0.7 ? 'conf-high' : conf >= 0.4 ? 'conf-med' : 'conf-low';
+
+      const attrs = entity.attributes || {};
+      let det = '';
+      Object.entries(attrs).forEach(([k, v]) => {
+        if (v && typeof v !== 'object')
+          det += '<div class="detail-row"><span class="detail-key">' + esc(k) +
+                 '</span><span class="detail-val">' + esc(String(v)) + '</span></div>';
+      });
+      const srcs = entity.sources || entity.source_ids || [];
+      if (srcs.length)
+        det += '<div class="detail-row"><span class="detail-key">sources</span><span class="detail-val">' +
+               srcs.map(s => '<span class="source-tag">' + esc(s) + '</span>').join('') + '</span></div>';
+
+      return '<div class="entity-card"><div class="entity-header">' +
+        '<div class="entity-icon ' + ic + '">' + (icons[type] || '❓') + '</div>' +
+        '<div class="entity-info"><div class="entity-type">' + esc(type) + '</div>' +
+        '<div class="entity-value">' + esc(label) + '</div></div>' +
+        '<span class="entity-confidence ' + cc + '">' + Math.round(conf*100) + '%</span>' +
+        '</div><div class="entity-details">' +
+        (det || '<div class="detail-row"><span class="detail-key">no details</span><span class="detail-val"></span></div>') +
+        '</div></div>';
+    }
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function getDemoData(query) {
+      return {
+        entities: [
+          { entity_type:'PHONE', value:query, label:query, confidence:1.0,
+            attributes:{ note:'demo — connect backend in settings' }, sources:['demo'] },
+          { entity_type:'EMAIL', value:'demo@example.com', label:'demo@example.com',
+            confidence:0.5, attributes:{}, sources:['demo'] },
+          { entity_type:'SOCIAL', value:'vk.com/demo', label:'VK: demo',
+            confidence:0.4, attributes:{ platform:'VKontakte' }, sources:['demo'] },
+          { entity_type:'LEAK', value:'demo', label:'2 breaches (demo)',
+            confidence:0.6, attributes:{ breaches:'ExampleDB 2023' }, sources:['demo'] },
+        ],
+        providers_used: 'demo', provider_count: 0
+      };
+    }
+
+    // ---- UI HELPERS ----
+    function showLoading(v) { document.getElementById('loading').classList.toggle('active', v); }
+    function showError(m) { const e = document.getElementById('errorMsg'); e.textContent = m; e.classList.add('active'); }
+    function hideError() { document.getElementById('errorMsg').classList.remove('active'); }
+
+    // ---- SETTINGS ----
+    function openSettings() {
+      document.getElementById('settingApiUrl').value = API_BASE;
+      document.getElementById('settingApiKey').value = API_KEY;
+      document.getElementById('settingNgrok').value = localStorage.getItem('nexint_ngrok') || '';
+      document.getElementById('settingsModal').classList.add('active');
+    }
+
+    function closeSettings(e) {
+      if (e.target === document.getElementById('settingsModal'))
+        document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function saveSettings() {
+      const ngrok = document.getElementById('settingNgrok').value.trim().replace(/\/+$/, '');
+      const apiUrl = document.getElementById('settingApiUrl').value.trim().replace(/\/+$/, '');
+      API_BASE = ngrok || apiUrl || DEFAULT_API;
+      API_KEY = document.getElementById('settingApiKey').value.trim();
+      localStorage.setItem('nexint_api_url', API_BASE);
+      localStorage.setItem('nexint_api_key', API_KEY);
+      if (ngrok) localStorage.setItem('nexint_ngrok', ngrok);
+      document.getElementById('settingsModal').classList.remove('active');
+      checkBackend();
+    }
+
+    async function checkBackend() {
+      try {
+        const r = await fetch(API_BASE + '/api/v1/providers', { signal: AbortSignal.timeout(3000) });
+        if (r.ok) {
+          const d = await r.json();
+          const c = Array.isArray(d) ? d.length : (d.count || d.total || 0);
+          document.getElementById('providerCount').textContent = c + ' providers';
+          document.querySelector('.status-dot').style.background = 'var(--success)';
+        }
+      } catch {
+        document.getElementById('providerCount').textContent = 'offline';
+        document.querySelector('.status-dot').style.background = 'var(--error)';
+      }
+    }
+    checkBackend();
+  </script>
+
+</body>
+</html>
